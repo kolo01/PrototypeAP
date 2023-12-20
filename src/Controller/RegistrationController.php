@@ -48,29 +48,5 @@ class RegistrationController extends AbstractController
           
        
     }
-    #[Route('/login', name: 'api_login')]
-    public function login(Request $request,UserRepository $userRep, UserPasswordHasherInterface $userPasswordHasher, UserAuthenticatorInterface $userAuthenticator, LoginAuthAuthenticator $authenticator, EntityManagerInterface $entityManager): Response
-    {
-        $user = new User();
-        $email = $request->request->get("email");
-       
-       $password=   $userPasswordHasher->isPasswordValid(
-                $user,
-                $request->request->get("plainPassword")
-            
-        );
-
-
-
-        $checker = $userRep->findOneBy(["email"=> $email,"password" => $password]);
-           if ($checker) {
-            return $this->json([$checker->getEmail(),$checker->getId()]);
-           }      
-        if (!$checker) {
-           
-            return $this->json(['Utilisateur inconnu, merci de bien vouloir verifier vos identifiants' ]);
-
-            
-        }
-}
+    
 }
