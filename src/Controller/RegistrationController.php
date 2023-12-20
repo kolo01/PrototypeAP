@@ -1,0 +1,76 @@
+<?php
+
+namespace App\Controller;
+
+use App\Entity\User;
+use App\Form\RegistrationFormType;
+use App\Repository\UserRepository;
+use App\Security\LoginAuthAuthenticator;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Authentication\UserAuthenticatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
+
+#[Route('/api', name: 'api_')]
+class RegistrationController extends AbstractController
+{
+    #[Route('/register', name: 'api_register')]
+    public function register(Request $request,UserRepository $userRep, UserPasswordHasherInterface $userPasswordHasher, UserAuthenticatorInterface $userAuthenticator, LoginAuthAuthenticator $authenticator, EntityManagerInterface $entityManager): Response
+    {
+        $user = new User();
+        $email = $request->request->get("email");
+        $checker = $userRep->findOneBy(["email"=> $email]);
+           if ($checker) {
+            return $this->json(["Utilisateur déjà enregistré"]);
+           }      
+        if (!$checker) {
+            $user->setEmail($request->request->get("email"));
+          
+            $user->setPassword(
+                $userPasswordHasher->hashPassword(
+                    $user,
+                    $request->request->get("plainPassword")
+                )
+            );
+
+            $entityManager->persist($user);
+            $entityManager->flush();
+            // do anything else you need here, like send an email
+            return $this->json(['enregistrer avec succés ' . $user->getEmail()]);
+
+            
+        }
+          
+       
+    }
+    #[Route('/login', name: 'api_login')]
+    public function login(Request $request,UserRepository $userRep, UserPasswordHasherInterface $userPasswordHasher, UserAuthenticatorInterface $userAuthenticator, LoginAuthAuthenticator $authenticator, EntityManagerInterface $entityManager): Response
+    {
+        $user = new User();
+        $email = $request->request->get("email");
+       
+       $password=   $userPasswordHasher->isPasswordValid(
+                $user,
+                $request->request->get("plainPassword")
+            
+        );
+
+
+
+        $checker = $userRep->findOneBy(["email"=> $email,"password" => $password]);
+           if ($checker) {
+            return $this->json([$checker->getEmail(),$checker->getId()]);
+           }      
+        if (!$checker) {
+           
+            return $this->json(['Utilisateur inconnu, merci de bien vouloir verifier vos identifiants' ]);
+
+            
+        }
+}
+}
